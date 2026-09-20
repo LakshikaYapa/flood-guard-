@@ -56,11 +56,12 @@ const userSchema = new mongoose.Schema(
 );
 
 // Hash the password automatically before saving, but only if it changed.
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
+// Note: modern Mongoose (v7+) no longer uses a next() callback here -
+// an async function that resolves (or throws) is enough.
+userSchema.pre('save', async function () {
+  if (!this.isModified('password')) return;
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
-  next();
 });
 
 // Instance method used during login to check a plaintext password
