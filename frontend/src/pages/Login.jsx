@@ -1,46 +1,64 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import React, { useState, useContext } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import API from '../services/api';
+import { AuthContext } from '../context/AuthContext';
+import { LanguageContext } from '../context/LanguageContext';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
-function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const { login, error, loading } = useAuth();
+const Login = () => {
+  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [error, setError] = useState('');
+  const { login } = useContext(AuthContext);
+  const { lang } = useContext(LanguageContext);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const success = await login({ email, password });
-    if (success) navigate('/dashboard');
+    try {
+      const res = await API.post('/auth/login', formData);
+      login(res.data.user, res.data.token);
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err.response?.data?.message || (lang === 'en' ? 'Login failed' : 'ඇතුළු වීම අසාර්ථකයි'));
+    }
   };
 
   return (
-    <div style={styles.wrap}>
-      <form style={styles.card} onSubmit={handleSubmit}>
-        <h2>Sign in to FloodGuard</h2>
-        {error && <p style={styles.error}>{error}</p>}
-        <label style={styles.label}>Email</label>
-        <input style={styles.input} type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        <label style={styles.label}>Password</label>
-        <input style={styles.input} type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        <button style={styles.button} type="submit" disabled={loading}>
-          {loading ? 'Signing in...' : 'Sign in'}
+    <div className="max-w-md mx-auto my-10 p-6 bg-slate-900 rounded-xl border border-slate-800">
+      <LanguageSwitcher />
+      <h2 className="text-2xl font-bold text-white mb-4 text-center">
+        {lang === 'en' ? 'Login' : 'ඇතුළු වන්න'}
+      </h2>
+      {error && <p className="text-rose-500 text-sm mb-4 text-center">{error}</p>}
+
+      <form onSubmit={handleSubmit} className="space-y-3">
+        <input
+          type="email"
+          placeholder={lang === 'en' ? 'Email Address' : 'විද්‍යුත් තැපෑල'}
+          required
+          className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded text-white text-sm"
+          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+        />
+        <input
+          type="password"
+          placeholder={lang === 'en' ? 'Password' : 'මුරපදය'}
+          required
+          className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded text-white text-sm"
+          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+        />
+        <button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white p-2.5 rounded font-semibold text-sm transition">
+          {lang === 'en' ? 'Login' : 'ඇතුළු වන්න'}
         </button>
-        <p style={{ textAlign: 'center', marginTop: '1rem' }}>
-          New here? <Link to="/register">Create an account</Link>
-        </p>
       </form>
+
+      <p className="text-slate-400 text-xs text-center mt-3">
+        {lang === 'en' ? "Don't have an account?" : "ගිණුමක් නැතිද?"}{' '}
+        <Link to="/register" className="text-blue-400">
+          {lang === 'en' ? 'Register' : 'ලියාපදිංචි වන්න'}
+        </Link>
+      </p>
     </div>
   );
-}
-
-const styles = {
-  wrap: { display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' },
-  card: { width: '320px', padding: '2rem', border: '1px solid #ddd', borderRadius: '10px', fontFamily: 'sans-serif' },
-  label: { display: 'block', fontSize: '13px', fontWeight: 600, margin: '10px 0 4px' },
-  input: { width: '100%', padding: '8px 10px', border: '1px solid #ccc', borderRadius: '6px', fontSize: '14px' },
-  button: { width: '100%', marginTop: '18px', padding: '10px', background: '#0E7C86', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 600, cursor: 'pointer' },
-  error: { background: '#FCE6DC', color: '#C2440F', padding: '8px 10px', borderRadius: '6px', fontSize: '13px' },
 };
 
 export default Login;
