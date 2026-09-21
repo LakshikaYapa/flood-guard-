@@ -1,12 +1,26 @@
 const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
 
+const formatUser = (user) => ({
+  id: user._id,
+  firstName: user.firstName,
+  lastName: user.lastName,
+  email: user.email,
+  phone: user.phone,
+  province: user.province,
+  district: user.district,
+  nearestTown: user.nearestTown,
+  role: user.role,
+  language: user.language,
+  theme: user.theme,
+});
+
 const registerUser = async (req, res) => {
   try {
-    const { name, email, password, phone, role } = req.body;
+    const { firstName, lastName, email, password, phone, province, district, nearestTown, role } = req.body;
 
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: 'Name, email and password are required' });
+    if (!firstName || !lastName || !email || !password) {
+      return res.status(400).json({ message: 'First name, last name, email and password are required' });
     }
 
     const existingUser = await User.findOne({ email });
@@ -15,13 +29,15 @@ const registerUser = async (req, res) => {
     }
 
     const safeRole = role === 'volunteer' ? 'volunteer' : 'citizen';
-    const user = await User.create({ name, email, password, phone, role: safeRole });
+
+    const user = await User.create({
+      firstName, lastName, email, password, phone,
+      province, district, nearestTown,
+      role: safeRole,
+    });
 
     res.status(201).json({
-      user: {
-        id: user._id, name: user.name, email: user.email,
-        role: user.role, language: user.language, theme: user.theme,
-      },
+      user: formatUser(user),
       token: generateToken(user._id),
     });
   } catch (error) {
@@ -44,10 +60,7 @@ const loginUser = async (req, res) => {
     }
 
     res.json({
-      user: {
-        id: user._id, name: user.name, email: user.email,
-        role: user.role, language: user.language, theme: user.theme,
-      },
+      user: formatUser(user),
       token: generateToken(user._id),
     });
   } catch (error) {
@@ -55,4 +68,8 @@ const loginUser = async (req, res) => {
   }
 };
 
-module.exports = { registerUser, loginUser };
+const getMe = async (req, res) => {
+  res.json({ user: formatUser(req.user) });
+};
+
+module.exports = { registerUser, loginUser, getMe };
