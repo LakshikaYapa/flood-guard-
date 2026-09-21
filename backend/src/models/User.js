@@ -7,9 +7,14 @@ const bcrypt = require('bcryptjs');
 // reference this User via an ObjectId - keeps this schema clean and shared.
 const userSchema = new mongoose.Schema(
   {
-    name: {
+    firstName: {
       type: String,
-      required: [true, 'Name is required'],
+      required: [true, 'First name is required'],
+      trim: true,
+    },
+    lastName: {
+      type: String,
+      required: [true, 'Last name is required'],
       trim: true,
     },
     email: {
@@ -29,10 +34,18 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
-    role: {
+    
+    province: {
       type: String,
-      enum: ['citizen', 'volunteer', 'admin'],
-      default: 'citizen',
+      trim: true,
+    },
+    district: {
+      type: String,
+      trim: true,
+    },
+    nearestTown: {
+      type: String,
+      trim: true,
     },
     // Preferences - persisted per-user so they follow the account across devices.
     language: {
